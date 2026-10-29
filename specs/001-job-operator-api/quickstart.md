@@ -20,8 +20,11 @@ definitions.
 ```bash
 uv python pin 3.14
 uv sync
-uv run uvicorn math_job_operator.api.main:app --reload --port "${PORT:-8000}"
+uv run math-job-operator --reload
 ```
+
+The service listens on `PORT` from `.env` (see `specs/002-port-from-env`); export the same
+value in your shell (`export PORT=8081`) so the `${PORT:-8000}` URLs below point at it.
 
 On first run, the seed default variables (`BASE_ENDPOINT_URL`, `DEMO_ENDPOINT_URL`,
 `SESSION_MANAGER_URL`, `SESSION_MANAGER_INSECURE`, `REDIS_URL`) are inserted into
@@ -30,9 +33,9 @@ On first run, the seed default variables (`BASE_ENDPOINT_URL`, `DEMO_ENDPOINT_UR
 ## Validation Scenario 1 — Discover the catalog (User Story 2)
 
 ```bash
-curl -s http://localhost:8000/api/v1/jobs | jq
-curl -s http://localhost:8000/api/v1/jobs/dependencies | jq
-curl -s http://localhost:8000/api/v1/jobs/variables | jq
+curl -s http://localhost:${PORT:-8000}/api/v1/jobs | jq
+curl -s http://localhost:${PORT:-8000}/api/v1/jobs/dependencies | jq
+curl -s http://localhost:${PORT:-8000}/api/v1/jobs/variables | jq
 ```
 
 **Expected**: the example immutable job (`awxsg_example`, or whatever name its file resolves
@@ -42,7 +45,7 @@ and `pymongo`; the variable list includes the five seeded defaults.
 ## Validation Scenario 2 — Run the example job (User Story 1)
 
 ```bash
-curl -s -X POST http://localhost:8000/api/v1/jobs \
+curl -s -X POST http://localhost:${PORT:-8000}/api/v1/jobs \
   -H "Content-Type: application/json" \
   -d '[{"name": "awxsg_example", "args": [{"epic": "AWXSG"}], "depends_on": null}]' | jq
 ```
@@ -54,7 +57,7 @@ containing collector data for epic "AWXSG", and `finished_at` rendered in the co
 ## Validation Scenario 3 — Dependent jobs (User Story 1)
 
 ```bash
-curl -s -X POST http://localhost:8000/api/v1/jobs \
+curl -s -X POST http://localhost:${PORT:-8000}/api/v1/jobs \
   -H "Content-Type: application/json" \
   -d '[
         {"name": "awxsg_example", "args": [{"epic": "AWXSG"}], "depends_on": null},
@@ -68,9 +71,9 @@ its logic had access to `awxsg_example`'s return value via the `upstream` variab
 ## Validation Scenario 4 — Upload a mutable job (User Story 3)
 
 ```bash
-curl -s -X PUT http://localhost:8000/api/v1/jobs \
+curl -s -X PUT http://localhost:${PORT:-8000}/api/v1/jobs \
   -F "file=@my_new_job.py" | jq
-curl -s http://localhost:8000/api/v1/jobs | jq '.[] | select(.name=="my_new_job")'
+curl -s http://localhost:${PORT:-8000}/api/v1/jobs | jq '.[] | select(.name=="my_new_job")'
 ```
 
 **Expected**: `200 OK` with `job_type: "mutable"`; the job now appears in the catalog and is
@@ -79,7 +82,7 @@ runnable via Scenario 2's request shape.
 **Rejection check** — attempt to overwrite the immutable example job:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" -X PUT http://localhost:8000/api/v1/jobs \
+curl -s -o /dev/null -w "%{http_code}\n" -X PUT http://localhost:${PORT:-8000}/api/v1/jobs \
   -F "file=@awxsg_example.py"
 ```
 
@@ -88,10 +91,10 @@ curl -s -o /dev/null -w "%{http_code}\n" -X PUT http://localhost:8000/api/v1/job
 ## Validation Scenario 5 — Shared variables (User Story 4)
 
 ```bash
-curl -s -X PUT http://localhost:8000/api/v1/variables \
+curl -s -X PUT http://localhost:${PORT:-8000}/api/v1/variables \
   -H "Content-Type: application/json" \
   -d '[{"name": "max_lookback_days", "value": 30}]' | jq
-curl -s http://localhost:8000/api/v1/jobs/variables | jq '.[] | select(.name=="MAX_LOOKBACK_DAYS")'
+curl -s http://localhost:${PORT:-8000}/api/v1/jobs/variables | jq '.[] | select(.name=="MAX_LOOKBACK_DAYS")'
 ```
 
 **Expected**: the variable is listed under its uppercased name `MAX_LOOKBACK_DAYS` with value

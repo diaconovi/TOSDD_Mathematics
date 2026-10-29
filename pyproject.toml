@@ -16,6 +16,9 @@ dependencies = [
     "to_collector_client",
 ]
 
+[project.scripts]
+math-job-operator = "math_job_operator.server:main"
+
 [tool.uv.sources]
 to_session_manager = { git = "ssh://git@github.com/diaconovi/Trade_Ops_Library.git", subdirectory = "packages/to_session_manager" }
 to_collector_client = { git = "ssh://git@github.com/diaconovi/Trade_Ops_Library.git", subdirectory = "packages/to_collector" }

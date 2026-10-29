@@ -14,7 +14,7 @@ reachable MongoDB and Redis instance.
 uv python pin 3.14
 uv sync
 cp .env.example .env   # then edit .env for your environment
-uv run uvicorn math_job_operator.api.main:app --reload --port "${PORT:-8000}"
+uv run math-job-operator --reload   # host and port come from HOST / PORT in .env
 ```
 
 On first run, five default shared variables are seeded into MongoDB if not already present
@@ -25,7 +25,8 @@ On first run, five default shared variables are seeded into MongoDB if not alrea
 | Variable | Description | Default |
 |---|---|---|
 | `LOGGING` | Log level: `INFO`, `DEBUG`, or `WARNING` | `INFO` |
-| `PORT` | HTTP listen port | `8000` |
+| `PORT` | HTTP listen port (1–65535) | `8000` |
+| `HOST` | Network address to bind (`0.0.0.0` = all interfaces) | `127.0.0.1` |
 | `TIME_ZONE` | IANA timezone used to render every reported timestamp | `UTC` |
 | `MONGO_URL` | MongoDB host | — (required) |
 | `MONGO_PORT` | MongoDB port | — (required) |
@@ -34,6 +35,13 @@ On first run, five default shared variables are seeded into MongoDB if not alrea
 | `MONGO_JOBS_COLLECTION` | Collection storing mutable job source | `jobs` |
 | `REDIS_URL` | Redis connection string (cross-worker job-dependency signaling) | `redis://localhost:6379/0` |
 | `IMMUTABLE_JOBS_DIR` | Directory holding immutable job scripts | `jobs/immutable` |
+
+`HOST` and `PORT` are resolved with the precedence `--host`/`--port` flag > environment
+variable > `.env` > default (e.g. `PORT=9090 uv run math-job-operator` or
+`uv run math-job-operator --port 9191` for a one-off run). An invalid value stops startup with
+exit status 2 and an `Invalid configuration: <NAME>=<value>` message. Launching uvicorn
+directly (`uv run uvicorn math_job_operator.api.main:app`) still works but does not read the
+port from `.env`.
 
 Adding a new **approved job dependency** (a package job scripts may import) is a
 project-level change: edit `APPROVED_JOB_PACKAGES` in

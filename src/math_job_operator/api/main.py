@@ -1,4 +1,4 @@
-"""FastAPI app factory and uvicorn entrypoint."""
+"""FastAPI app factory. The process entrypoint lives in math_job_operator.server."""
 
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager

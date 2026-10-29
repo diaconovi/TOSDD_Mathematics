@@ -1,8 +1,9 @@
 """Application configuration, loaded from the environment / `.env` file."""
 
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
+from pydantic import Field, StringConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,12 +15,15 @@ class Settings(BaseSettings):
         ...               MONGO_ACCOUNT_DB="mathematics", TIME_ZONE="UTC")
         >>> s.PORT
         8000
+        >>> s.HOST
+        '127.0.0.1'
     """
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     LOGGING: Literal["INFO", "DEBUG", "WARNING"] = "INFO"
-    PORT: int = 8000
+    PORT: Annotated[int, Field(ge=1, le=65535)] = 8000
+    HOST: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)] = "127.0.0.1"
     TIME_ZONE: str = "UTC"
 
     MONGO_URL: str
